@@ -14,7 +14,7 @@ allprojects {
     apply from: new File(rootProject.rootDir, '/scripts/compileSub.gradle')
 
     group = 'ru.spliterash'
-    version = '2.0.7'
+    version = '2.0.8'
 
 
     sourceCompatibility = '1.8'
@@ -61,9 +61,9 @@ dependencies {
     compileOnly 'com.xxmicloxx:NoteBlockAPI:2.1-SNAPSHOT'
     compileOnly fileTree("libs")
 
-    api 'com.github.cryptomorin:XSeries:8.4.0'
+    api 'com.github.cryptomorin:XSeries:8.7.0'
     api 'com.github.BananaPuncher714:NBTEditor:master-SNAPSHOT'
-    api 'org.bstats:bstats-bukkit:2.2.1'
+    api 'org.bstats:bstats-bukkit:3.0.0'
 }
 
 //noinspection GroovyAssignabilityCheck

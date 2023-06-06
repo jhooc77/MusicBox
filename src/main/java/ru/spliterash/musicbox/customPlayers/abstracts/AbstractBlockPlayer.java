@@ -35,6 +35,7 @@ public abstract class AbstractBlockPlayer extends PositionSongPlayer implements 
         this.location = BukkitUtils.centerBlock(location);
         setRange(range);
         setTargetLocation(BukkitUtils.centerBlock(location));
+        if (getLocation().getBlock().hasMetadata("volume")) setVolume(getLocation().getBlock().getMetadata("volume").get(0).asByte());
         AbstractBlockPlayer oldBlock = players.put(getTargetLocation(), this);
         if (oldBlock != null)
             oldBlock.destroy();
@@ -128,6 +129,8 @@ public abstract class AbstractBlockPlayer extends PositionSongPlayer implements 
             musicBoxModel.destroy();
         }
     }
+
+
 
     /**
      * Вызывается в случае нормального завершения музыки

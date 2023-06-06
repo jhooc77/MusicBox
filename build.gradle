@@ -25,6 +25,10 @@ allprojects {
         mavenLocal()
 
         maven {
+            name = 'codemc'
+            url = 'https://repo.codemc.org/repository/maven-public/'
+        }
+        maven {
             url = 'https://jitpack.io'
         }
         maven {
@@ -52,13 +56,14 @@ allprojects {
 
 dependencies {
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
-    compileOnly 'org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT'
-    compileOnly 'com.github.koca2000:NoteBlockAPI:2.0-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.18.2-R0.1-SNAPSHOT'
+    //compileOnly 'com.github.koca2000:NoteBlockAPI:2.0-SNAPSHOT'
+    compileOnly 'com.xxmicloxx:NoteBlockAPI:2.1-SNAPSHOT'
     compileOnly fileTree("libs")
 
-    implementation 'com.github.cryptomorin:XSeries:8.4.0'
-    implementation 'com.github.BananaPuncher714:NBTEditor:master-SNAPSHOT'
-    implementation 'org.bstats:bstats-bukkit:2.2.1'
+    implementation 'com.github.cryptomorin:XSeries:9.1.0'
+    implementation 'io.github.bananapuncher714:nbteditor:7.18.3'
+    implementation 'org.bstats:bstats-bukkit:3.0.0'
 }
 
 //noinspection GroovyAssignabilityCheck

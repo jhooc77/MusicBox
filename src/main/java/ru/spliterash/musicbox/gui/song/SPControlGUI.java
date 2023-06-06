@@ -6,7 +6,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import ru.spliterash.musicbox.Lang;
+import ru.spliterash.musicbox.MusicBox;
 import ru.spliterash.musicbox.customPlayers.abstracts.AbstractBlockPlayer;
 import ru.spliterash.musicbox.customPlayers.interfaces.IPlayList;
 import ru.spliterash.musicbox.customPlayers.interfaces.MusicBoxSongPlayer;
@@ -91,6 +94,8 @@ public class SPControlGUI {
                         spModel.getMusicBoxSongPlayer().getApiPlayer().setVolume((byte) (spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()+5));
                         if (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer) {
                             ((PlayerSongPlayer) spModel.getMusicBoxSongPlayer()).getModel().getWrapper().setVolume(spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume());
+                        } else if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                            ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getLocation().getBlock().setMetadata("volume", new FixedMetadataValue(MusicBox.getInstance(), spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()));
                         }
                         updateControlButtons();
                     },
@@ -98,6 +103,8 @@ public class SPControlGUI {
                         spModel.getMusicBoxSongPlayer().getApiPlayer().setVolume((byte) (spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()-5));
                         if (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer) {
                             ((PlayerSongPlayer) spModel.getMusicBoxSongPlayer()).getModel().getWrapper().setVolume(spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume());
+                        } else if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                            ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getLocation().getBlock().setMetadata("volume", new FixedMetadataValue(MusicBox.getInstance(), spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()));
                         }
                         updateControlButtons();
                     }));

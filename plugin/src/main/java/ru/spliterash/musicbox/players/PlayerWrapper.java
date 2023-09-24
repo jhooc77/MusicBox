@@ -1,5 +1,9 @@
 package ru.spliterash.musicbox.players;
 
+import com.xxmicloxx.NoteBlockAPI.model.Playlist;
+import com.xxmicloxx.NoteBlockAPI.model.RepeatMode;
+import com.xxmicloxx.NoteBlockAPI.model.playmode.MonoMode;
+import com.xxmicloxx.NoteBlockAPI.model.playmode.StereoMode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,6 +23,7 @@ import ru.spliterash.musicbox.customPlayers.objects.RadioPlayer;
 import ru.spliterash.musicbox.customPlayers.objects.SpeakerPlayer;
 import ru.spliterash.musicbox.customPlayers.playlist.ListPlaylist;
 import ru.spliterash.musicbox.customPlayers.playlist.SingletonPlayList;
+import ru.spliterash.musicbox.gui.song.SPControlGUI;
 import ru.spliterash.musicbox.song.MusicBoxSong;
 import ru.spliterash.musicbox.song.songContainers.types.SongContainer;
 import ru.spliterash.musicbox.utils.BukkitUtils;
@@ -60,6 +65,11 @@ public class PlayerWrapper {
      */
     @Getter(AccessLevel.NONE)
     private BossBar playBar;
+
+    private RepeatMode repeatMode = RepeatMode.NO;
+
+    private byte volume = 100;
+    private SPControlGUI.ChannelMode channelMode = SPControlGUI.ChannelMode.Stereo;
 
     /**
      * Вызывается только если игрок захочет что нибудь послушать
@@ -141,8 +151,52 @@ public class PlayerWrapper {
         speaker = !speaker;
         if (isPlayNow()) {
             PlayerSongPlayer oldPlayer = getActivePlayer();
-            play(oldPlayer.getPlayList(), oldPlayer.getApiPlayer().getTick());
+            play(oldPlayer);
         }
+    }
+
+    public boolean canSwitchRepeat() { return getPlayer().hasPermission("musicbox.repeat"); }
+
+    public boolean switchRepeatModeChecked() {
+        if (!canSwitchRepeat()) {
+            player.sendMessage(Lang.CANT_SWITCH_REPEAT.toString());
+            return false;
+        } else {
+            switchRepeatMode();
+            return true;
+        }
+    }
+
+    public void switchRepeatMode() {
+        switch(repeatMode){
+            case NO:
+                repeatMode = RepeatMode.ALL;
+                break;
+            case ALL:
+                repeatMode = RepeatMode.ONE;
+                break;
+            case ONE:
+                repeatMode = RepeatMode.NO;
+                break;
+        }
+        if (isPlayNow()) {
+            PlayerSongPlayer oldPlayer = getActivePlayer();
+            oldPlayer.getApiPlayer().setRepeatMode(repeatMode);
+        }
+    }
+
+    public void play(PlayerSongPlayer player) {
+        short tick = player.getTick();
+        IPlayList playList = player.getPlayList();
+        if (speaker)
+            startSpeaker(playList);
+        else
+            startRadio(playList);
+        Playlist apiPlayList = playList.getPlayList();
+        activePlayer.getApiPlayer().setPlaylist(apiPlayList);
+        activePlayer.getApiPlayer().playSong(player.getApiPlayer().getPlayedSongIndex());
+        if (tick > -1)
+            activePlayer.getApiPlayer().setTick(tick);
     }
 
     public void play(IPlayList song) {
@@ -220,6 +274,24 @@ public class PlayerWrapper {
         if (activePlayer == playerModel) {
             afterDestroy();
         }
+    }
+
+    public void setVolume(int volume) {
+        if (volume > 100) {
+            volume = 100;
+        } else if (volume < 0) {
+            volume = 0;
+        }
+        this.volume = (byte) volume;
+
+    }
+
+    public void setChannelMode(SPControlGUI.ChannelMode mode) {
+        this.channelMode = mode;
+    }
+
+    public SPControlGUI.ChannelMode getChannelMode() {
+        return channelMode;
     }
 
     public boolean canHearMusic() {

@@ -28,6 +28,7 @@ public class MusicBoxConfig {
     private String lang;
     private int autoDestroy;
     private boolean bStats;
+    private boolean extendedOctavesRange;
     private boolean hearPermissionsCheck;
 
     @Getter

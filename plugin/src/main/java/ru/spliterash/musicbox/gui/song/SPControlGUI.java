@@ -1,19 +1,35 @@
 package ru.spliterash.musicbox.gui.song;
 
 import com.cryptomorin.xseries.XMaterial;
+import com.xxmicloxx.NoteBlockAPI.model.RepeatMode;
+import com.xxmicloxx.NoteBlockAPI.model.playmode.ChannelMode;
+import com.xxmicloxx.NoteBlockAPI.model.playmode.MonoMode;
+import com.xxmicloxx.NoteBlockAPI.model.playmode.MonoStereoMode;
+import com.xxmicloxx.NoteBlockAPI.model.playmode.StereoMode;
+import com.xxmicloxx.NoteBlockAPI.songplayer.EntitySongPlayer;
+import com.xxmicloxx.NoteBlockAPI.songplayer.RadioSongPlayer;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import ru.spliterash.musicbox.Lang;
+import ru.spliterash.musicbox.MusicBox;
+import ru.spliterash.musicbox.customPlayers.abstracts.AbstractBlockPlayer;
 import ru.spliterash.musicbox.customPlayers.interfaces.IPlayList;
 import ru.spliterash.musicbox.customPlayers.interfaces.MusicBoxSongPlayer;
+import ru.spliterash.musicbox.customPlayers.interfaces.PlayerSongPlayer;
 import ru.spliterash.musicbox.customPlayers.models.MusicBoxSongPlayerModel;
 import ru.spliterash.musicbox.gui.GUIActions;
 import ru.spliterash.musicbox.minecraft.gui.GUI;
 import ru.spliterash.musicbox.minecraft.gui.InventoryAction;
 import ru.spliterash.musicbox.minecraft.gui.actions.ClickAction;
 import ru.spliterash.musicbox.minecraft.gui.actions.PlayerClickAction;
+import ru.spliterash.musicbox.players.PlayerWrapper;
 import ru.spliterash.musicbox.song.MusicBoxSong;
+import ru.spliterash.musicbox.song.MusicBoxSongManager;
+import ru.spliterash.musicbox.song.songContainers.types.FullSongContainer;
 import ru.spliterash.musicbox.utils.BukkitUtils;
 import ru.spliterash.musicbox.utils.ItemUtils;
 import ru.spliterash.musicbox.utils.SongUtils;
@@ -24,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Контроллер SongPlayer'а
@@ -34,7 +51,7 @@ import java.util.Set;
 public class SPControlGUI {
     private final MusicBoxSongPlayerModel spModel;
     private final GUI gui;
-    private final MusicBoxSong currentPlay;
+    private MusicBoxSong currentPlay;
     private boolean closed = false;
 
     public SPControlGUI(MusicBoxSongPlayerModel songPlayerModel) {
@@ -46,6 +63,7 @@ public class SPControlGUI {
 
     public void refresh() {
         IPlayList list = spModel.getPlayList();
+        currentPlay = list.getCurrent();
         List<MusicBoxSong> prev = list.getPrevSongs(4);
         Collections.reverse(prev);
         List<MusicBoxSong> next = list.getNextSongs(4);
@@ -70,8 +88,107 @@ public class SPControlGUI {
         MusicBoxSongPlayer player = spModel.getMusicBoxSongPlayer();
         // Кнопка остановки
         {
-            ItemStack stack = GUIActions.getStopStack();
-            gui.addItem(22, stack, new ClickAction(player::destroy));
+            gui.addItem(
+                    19,
+                    ItemUtils.createStack(XMaterial.TORCH, Lang.PARENT_CONTAINER.toString(), null),
+                    (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer)
+                            ? new ClickAction(() -> MusicBoxSongManager.getRootContainer().createGUI(((PlayerSongPlayer) spModel.getMusicBoxSongPlayer().getApiPlayer()).getModel().getWrapper()).openPage(0, GUIActions.DEFAULT_MODE))
+                            : new PlayerClickAction(HumanEntity::closeInventory));
+            gui.addItem(
+                    20,
+                    ItemUtils.createStack(XMaterial.NOTE_BLOCK, Lang.VOLUME_NAME.toString("{value}", Byte.toString(spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume())), Lang.VOLUME_LORE.toList()),
+                    new ClickAction(() -> {
+                        spModel.getMusicBoxSongPlayer().getApiPlayer().setVolume((byte) (spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()+5));
+                        if (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer) {
+                            ((PlayerSongPlayer) spModel.getMusicBoxSongPlayer()).getModel().getWrapper().setVolume(spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume());
+                        } else if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                            ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getLocation().getBlock().setMetadata("volume", new FixedMetadataValue(MusicBox.getInstance(), spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()));
+                        }
+                        updateControlButtons();
+                    },
+                    () -> {
+                        spModel.getMusicBoxSongPlayer().getApiPlayer().setVolume((byte) (spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()-5));
+                        if (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer) {
+                            ((PlayerSongPlayer) spModel.getMusicBoxSongPlayer()).getModel().getWrapper().setVolume(spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume());
+                        } else if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                            ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getLocation().getBlock().setMetadata("volume", new FixedMetadataValue(MusicBox.getInstance(), spModel.getMusicBoxSongPlayer().getApiPlayer().getVolume()));
+                        }
+                        updateControlButtons();
+                    }));
+            gui.addItem(
+                    21,
+                    ItemUtils.createStack(XMaterial.NOTE_BLOCK, Lang.CHANNELMODE_NAME.toString("{value}", spModel.getMusicBoxSongPlayer().getApiPlayer().getChannelMode().getClass().getSimpleName()), Collections.emptyList()),
+                    new ClickAction(() -> {
+                        ChannelMode mode = ChannelMode.getFromClass(spModel.getMusicBoxSongPlayer().getApiPlayer().getChannelMode().getClass()).next();
+                        if (spModel.getMusicBoxSongPlayer().getApiPlayer() instanceof EntitySongPlayer) {
+                            EntitySongPlayer songPlayer = (EntitySongPlayer) spModel.getMusicBoxSongPlayer().getApiPlayer();
+                            songPlayer.setChannelMode(mode.get());
+                        } else if (spModel.getMusicBoxSongPlayer().getApiPlayer() instanceof RadioSongPlayer) {
+                            RadioSongPlayer songPlayer = (RadioSongPlayer) spModel.getMusicBoxSongPlayer().getApiPlayer();
+                            songPlayer.setChannelMode(mode.get());
+                        }
+                        if (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer) {
+                            ((PlayerSongPlayer) spModel.getMusicBoxSongPlayer()).getModel().getWrapper().setChannelMode(mode);
+                        } else if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                            ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getLocation().getBlock().setMetadata("channel_mode", new FixedMetadataValue(MusicBox.getInstance(), mode));
+                        }
+                        updateControlButtons();
+                    }));
+            gui.addItem(22, GUIActions.getStopStack(), new ClickAction(player::destroy));
+            ItemStack repeatButton;
+            {
+                List<String> lore;
+                String status = "null";
+                if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                    switch(((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getRepeatModeValue()) {
+                        case ALL:
+                            status = Lang.REPEAT_ALL.toString();
+                            break;
+                        case NO:
+                            status = Lang.REPEAT_NO.toString();
+                            break;
+                        case ONE:
+                            status = Lang.REPEAT_ONE.toString();
+                            break;
+                    }
+                } else {
+                    switch(spModel.getMusicBoxSongPlayer().getApiPlayer().getRepeatMode()) {
+                        case ALL:
+                            status = Lang.REPEAT_ALL.toString();
+                            break;
+                        case NO:
+                            status = Lang.REPEAT_NO.toString();
+                            break;
+                        case ONE:
+                            status = Lang.REPEAT_ONE.toString();
+                            break;
+                    }
+                }
+                lore = Lang.SWITH_REPEAT_MODE_LORE.toList("{status}", status);
+                repeatButton = ItemUtils.createStack(XMaterial.NOTE_BLOCK, Lang.REPEAT_MODE.toString(), lore);
+            }
+            gui.addItem(26, repeatButton, new PlayerClickAction(p -> {
+                if (p.hasPermission("musicbox.repeat")) {
+                    if (spModel.getMusicBoxSongPlayer() instanceof PlayerSongPlayer) {
+                        PlayerWrapper.getInstance(p).switchRepeatMode();
+                    } else if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer){
+                        switch(((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).getRepeatModeValue()){
+                            case NO:
+                                ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).setRepeatModeValue(RepeatMode.ALL);
+                                break;
+                            case ALL:
+                                ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).setRepeatModeValue(RepeatMode.ONE);
+                                break;
+                            case ONE:
+                                ((AbstractBlockPlayer) spModel.getMusicBoxSongPlayer()).setRepeatModeValue(RepeatMode.NO);
+                                break;
+                        }
+                    }
+                    updateControlButtons();
+                } else {
+                    p.sendMessage(Lang.CANT_SWITCH_REPEAT.toString());
+                }
+            }));
         }
     }
 
@@ -82,7 +199,11 @@ public class SPControlGUI {
                 playNow
         ), new ClickAction(() -> {
             spModel.getPlayList().setSong(song);
-            spModel.createNextPlayer();
+            if (spModel.getMusicBoxSongPlayer() instanceof AbstractBlockPlayer) {
+                spModel.createNextPlayer();
+            } else {
+                spModel.playSong(songNum);
+            }
         }));
     }
 
@@ -149,6 +270,38 @@ public class SPControlGUI {
         InventoryAction action = new PlayerClickAction(HumanEntity::closeInventory);
         for (int i = 0; i < gui.getInventory().getSize(); i++) {
             gui.addItem(i, close, action);
+        }
+    }
+
+    public enum ChannelMode {
+        Mono(MonoMode.class),
+        Stereo(StereoMode.class),
+        MonoStereo(MonoStereoMode.class);
+
+        final Class<? extends com.xxmicloxx.NoteBlockAPI.model.playmode.ChannelMode> mode;
+
+        ChannelMode(Class<? extends com.xxmicloxx.NoteBlockAPI.model.playmode.ChannelMode> mode) {
+            this.mode = mode;
+        }
+        public ChannelMode next() {
+            return values()[ordinal() + 1 >= values().length ? 0 : (ordinal() + 1)];
+        }
+
+        public static ChannelMode getFromClass(Class<? extends com.xxmicloxx.NoteBlockAPI.model.playmode.ChannelMode> mode) {
+            return Stream.of(values()).filter(m -> m.mode.equals(mode)).findAny().orElse(Mono);
+        }
+
+        public com.xxmicloxx.NoteBlockAPI.model.playmode.ChannelMode get() {
+            switch (this) {
+                case Mono:
+                    return new MonoMode();
+                case Stereo:
+                    return new StereoMode();
+                case MonoStereo:
+                    return new MonoStereoMode();
+                default:
+                    return new MonoMode();
+            }
         }
     }
 }

@@ -49,3 +49,4 @@ autoDestroy: 60
 # Whether it is necessary to check the pex of musicbox.hear. By default, it is not checked and everyone can hear music
 # but if you need it, then set to true and now no one can hear music without this pex
 hearPermissionsCheck: false
+extendedOctavesRange: false

@@ -32,10 +32,14 @@ public class SpeakerPlayer extends EntitySongPlayer implements PlayerSongPlayer,
     private final PlayerWrapper owner;
 
     public SpeakerPlayer(IPlayList list, PlayerWrapper wrapper) {
-        super(list.getCurrent().getSong());
+        super(list.getPlayList());
+        if (MusicBox.getInstance().getConfigObject().isExtendedOctavesRange()) this.setEnable10Octave(true);
+        this.setRepeatMode(wrapper.getRepeatMode());
         this.musicBoxModel = new MusicBoxSongPlayerModel(this, list, SongUtils.nextPlayerSong(wrapper));
         this.model = new PlayerPlayerModel(wrapper, musicBoxModel);
         this.rangeModel = new RangePlayerModel(musicBoxModel);
+        setVolume(wrapper.getVolume());
+        setChannelMode(wrapper.getChannelMode().get());
         this.owner = wrapper;
         setEntity(wrapper.getPlayer());
         setRange(MusicBox.getInstance().getConfigObject().getSpeakerRadius());
@@ -74,7 +78,7 @@ public class SpeakerPlayer extends EntitySongPlayer implements PlayerSongPlayer,
 
     @Override
     public boolean isDestroyed() {
-        return destroyed;
+        return !playing;
     }
 
     @Override

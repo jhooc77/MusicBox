@@ -119,6 +119,8 @@ public enum Lang {
     CANT_SWITCH(
             "You cant switch play mode",
             "&6Вы не можете поменять режим проигрывания"),
+    CANT_SWITCH_REPEAT(
+            "You cant switch repeat mode"),
     NEXT(
             "&6Next",
             "&6Вперёд"),
@@ -199,7 +201,6 @@ public enum Lang {
                     "&7Режим колонки позволит игрокам рядом с вами слышать вашу музыку"
             )
     ),
-
     SWITH_MODE_NO_PEX_LORE(
             Arrays.asList(
                     "&7You need &bmusicbox.speaker to change mode"
@@ -211,6 +212,23 @@ public enum Lang {
     SPEAKER_MODE(
             "&6Speaker mode",
             "&6Режим колонки"),
+
+
+    SWITH_REPEAT_MODE_LORE(
+            Arrays.asList(
+                    "&7Status: {status}",
+                    "&7Repeat mode allow music to repeat"
+            )
+    ),
+
+    SWITH_REPEAT_MODE_NO_PEX_LORE(
+            Arrays.asList(
+                    "&7You need &bmusicbox.repeat to change mode"
+            )
+    ),
+    REPEAT_MODE(
+            "&6Repeat mode"),
+
     PLAYLIST_EDITOR(
             "&6Playlist list",
             "&6Список плейлистов"),
@@ -494,6 +512,27 @@ public enum Lang {
                     "but don't worry, we'll convert it to the new one. Click again, but now with a new disc",
             "&6Похоже это диск от старой версии плагина, но не волнуйся, " +
                     "мы переделаем его в новый. Кликни ещё раз, но теперь новым диском, он должен быть где то у тебя в инвентаре"
+    ),
+    VOLUME_NAME(
+            "&7Volume : &e{value}"
+    ),
+    VOLUME_LORE(
+            Arrays.asList(
+                    "&7Left Click -> volume + &a5",
+                    "&7Right Click -> volume - &c5"
+            )
+    ),
+    CHANNELMODE_NAME(
+            "&7Channel Mode : &e{value}"
+    ),
+    REPEAT_ALL(
+            "&eRepeat playlist songs"
+    ),
+    REPEAT_NO(
+            "&eNo repeat"
+    ),
+    REPEAT_ONE(
+            "&eRepeat one song"
     ),
     SILENT_MODE_LORE(
             Arrays.asList(

@@ -1,9 +1,11 @@
 package ru.spliterash.musicbox.customPlayers.abstracts;
 
+import com.xxmicloxx.NoteBlockAPI.model.RepeatMode;
 import com.xxmicloxx.NoteBlockAPI.songplayer.PositionSongPlayer;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.spliterash.musicbox.MusicBox;
@@ -26,12 +28,19 @@ public abstract class AbstractBlockPlayer extends PositionSongPlayer implements 
     private final MusicBoxSongPlayerModel musicBoxModel;
     private final RangePlayerModel rangePlayerModel;
     private final Location location;
+    private RepeatMode repeatModeValue = RepeatMode.NO;
 
     public AbstractBlockPlayer(IPlayList list, Location location, int range) {
-        super(list.getCurrent().getSong());
+        super(list.getPlayList());
+        if (MusicBox.getInstance().getConfigObject().isExtendedOctavesRange()) this.setEnable10Octave(true);
         this.location = BukkitUtils.centerBlock(location);
         setRange(range);
         setTargetLocation(BukkitUtils.centerBlock(location));
+        Block block = getLocation().getBlock();
+        if (block.hasMetadata("volume")) setVolume(block.getMetadata("volume").get(0).asByte());
+        if (block.hasMetadata("channel_mode")) {
+            //TODO: 이잉 없어링
+        }
         AbstractBlockPlayer oldBlock = players.put(getTargetLocation(), this);
         if (oldBlock != null)
             oldBlock.destroy();
@@ -103,7 +112,7 @@ public abstract class AbstractBlockPlayer extends PositionSongPlayer implements 
 
     @Override
     public boolean isDestroyed() {
-        return destroyed;
+        return !playing;
     }
 
     @Override
@@ -130,8 +139,19 @@ public abstract class AbstractBlockPlayer extends PositionSongPlayer implements 
         }
     }
 
+
+
     /**
      * Вызывается в случае нормального завершения музыки
      */
     protected abstract void songEnd();
+
+    public void setRepeatModeValue(RepeatMode repeatMode) {
+        this.repeatModeValue = repeatMode;
+        if (repeatMode == RepeatMode.ONE) {
+            getApiPlayer().setRepeatMode(RepeatMode.ONE);
+        } else {
+            getApiPlayer().setRepeatMode(RepeatMode.NO);
+        }
+    }
 }

@@ -35,6 +35,15 @@ public class PlayerPlayerModel {
         if (current == -1) {
             return;
         }
+        if (current == 0) {
+            if (model.getPlayList().hasNext() && model.getPlayList().getNextSongs(1).get(0).getSong() == model.getMusicBoxSongPlayer().getMusicBoxSong().getSong()) {
+                model.getPlayList().next();
+            }
+            if (model.getControlGUI() != null) {
+                model.getControlGUI().refresh();
+            }
+            wrapper.setBarTitle(Lang.CURRENT_PLAYNING.toString("{song}", model.getCurrentSong().getName()));
+        }
         double progress = (double) current / (double) all;
         if (progress >= 0 && progress <= 1) {
             wrapper.setBarProgress(progress);
